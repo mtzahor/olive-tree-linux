@@ -1,4 +1,4 @@
-Olive Tree Linux v0.0.2
+Olive Tree Linux v0.0.3
 
 Minimalist Linux distro with Rust init.
 
