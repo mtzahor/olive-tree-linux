@@ -4,13 +4,43 @@ Minimalist Linux distro with Rust init.
 
 Version history:
 
+- v0.0.4  Added reproducible, one-command builds of the kernel, BusyBox, Rust init, rootfs, and initramfs from source
 - v0.0.3  PID 1 lifecycle and controlled shutdown
 - v0.0.2  Rust PID 1 + mounts + process/session/console setup
 - v0.0.1  Linux + BusyBox shell
 
-Building and running:
+Building and running: run in the cloned repository ./scripts/build.sh
 
-1. Compile the latest Linux kernel with the configuration found in kernel/config and add it to build directory inside the repo so that you have build/bzImage.
-2. Build the Rust init: ./scripts/build-init.sh
-3. Build initramfs: ./scripts/build-initramfs.sh
-4. Boot the distro in  QEMU: ./scripts/run-qemu.sh
+## Build dependencies
+
+Olive Tree Linux is currently built on Debian.
+
+### System packages
+
+
+sudo apt update
+
+sudo apt install \
+    build-essential \
+    bc \
+    bison \
+    flex \
+    libssl-dev \
+    libelf-dev \
+    libncurses-dev \
+    cpio \
+    xz-utils \
+    bzip2 \
+    wget \
+    file \
+    qemu-system-x86
+
+### Rust
+
+Install Rust using rustup, then add the musl target:
+
+rustup target add x86_64-unknown-linux-musl
+
+A musl toolchain may also be required on Debian:
+
+sudo apt install musl-tools
