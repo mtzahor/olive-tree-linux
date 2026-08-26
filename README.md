@@ -4,12 +4,13 @@ Minimalist Linux distro with Rust init.
 
 Version history:
 
+- v0.0.5  Added a reproducible UEFI-bootable GPT disk image with GRUB and automatic QEMU UEFI boot.
 - v0.0.4  Added reproducible, one-command builds of the kernel, BusyBox, Rust init, rootfs, and initramfs from source
 - v0.0.3  PID 1 lifecycle and controlled shutdown
 - v0.0.2  Rust PID 1 + mounts + process/session/console setup
 - v0.0.1  Linux + BusyBox shell
 
-Building and running: run in the cloned repository ./scripts/build.sh
+Building and running: run in the cloned repository ./scripts/build.sh and then /scripts/run-qemu-uefi.sh or /scripts/run-qemu.sh to run without UEFI
 
 ## Build dependencies
 
@@ -33,7 +34,12 @@ sudo apt install \
     bzip2 \
     wget \
     file \
-    qemu-system-x86
+    qemu-system-x86 \
+    ovmf \
+    grub-efi-amd64-bin \
+    dosfstools \
+    mtools \
+    gdisk \
 
 ### Rust
 
