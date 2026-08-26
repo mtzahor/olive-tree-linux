@@ -4,6 +4,9 @@ set -eu
 
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 
+INIT_BINARY="$ROOT/init/target/x86_64-unknown-linux-musl/release/olive-init"
+BUILD_BINARY="$ROOT/build/olive-init"
+
 echo "Building olive-init..."
 
 cd "$ROOT/init"
@@ -12,12 +15,12 @@ cargo build \
     --release \
     --target x86_64-unknown-linux-musl
 
-echo "Installing olive-init into rootfs..."
+echo "Installing olive-init into build directory..."
 
-cp \
-    target/x86_64-unknown-linux-musl/release/olive-init \
-    "$ROOT/rootfs/init"
+mkdir -p "$ROOT/build"
 
-chmod +x "$ROOT/rootfs/init"
+cp "$INIT_BINARY" "$BUILD_BINARY"
+
+chmod +x "$BUILD_BINARY"
 
 echo "olive-init built successfully."
