@@ -57,7 +57,7 @@ echo "Building GRUB EFI loader..."
 
 grub-mkstandalone \
     --format=x86_64-efi \
-    --modules="part_gpt fat linux search search_fs_file" \
+    --modules="part_gpt fat linux search search_fs_file efi_gop" \
     --output="$GRUB_EFI" \
     "boot/grub/grub.cfg=$GRUB_CONFIG"
 

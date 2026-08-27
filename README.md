@@ -1,9 +1,10 @@
-Olive Tree Linux v0.0.5
+Olive Tree Linux v0.0.6
 
 Minimalist Linux distro with Rust init.
 
 Version history:
 
+- v0.0.6  Added essential laptop hardware support for ACPI/EFI, PCIe, USB/HID, framebuffer console, USB storage, and NVMe in preparation for first physical boot
 - v0.0.5  Added a reproducible UEFI-bootable GPT disk image with GRUB and automatic QEMU UEFI boot.
 - v0.0.4  Added reproducible, one-command builds of the kernel, BusyBox, Rust init, rootfs, and initramfs from source
 - v0.0.3  PID 1 lifecycle and controlled shutdown
