@@ -132,7 +132,7 @@ fn shutdown(shell_pid: libc::pid_t) -> ! {
 fn main() {
     println!("================================");
     println!("      Olive Tree Linux");
-    println!("           0.0.6");
+    println!("           0.1.0");
     println!("================================");
 
     unsafe {
