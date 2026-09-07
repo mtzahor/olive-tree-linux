@@ -1,10 +1,11 @@
-Olive Tree Linux v0.1.0
+Olive Tree Linux: Sapling v0.1.1
 
 Minimalist Linux distro with Rust init.
 
 Version history:
 
-- v0.1.0 “Sapling”  First successful physical boot of Olive Tree Linux on x86-64 hardware, from UEFI USB to an interactive graphical console and shell.
+- v0.1.1  Wi-Fi networking: Added RTL8851BE/rtw89 Wi-Fi support, Added static iw, Added static wpa_supplicant
+- v0.1.0  “Sapling”  First successful physical boot of Olive Tree Linux on x86-64 hardware, from UEFI USB to an interactive graphical console and shell.
 - v0.0.6  Added essential laptop hardware support for ACPI/EFI, PCIe, USB/HID, framebuffer console, USB storage, and NVMe in preparation for first physical boot
 - v0.0.5  Added a reproducible UEFI-bootable GPT disk image with GRUB and automatic QEMU UEFI boot.
 - v0.0.4  Added reproducible, one-command builds of the kernel, BusyBox, Rust init, rootfs, and initramfs from source

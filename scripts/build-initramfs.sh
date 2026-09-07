@@ -20,7 +20,8 @@ mkdir -p \
     "$ROOTFS/root" \
     "$ROOTFS/sbin" \
     "$ROOTFS/sys" \
-    "$ROOTFS/tmp"
+    "$ROOTFS/tmp" \
+    "$ROOTFS/var/run/wpa_supplicant"
 
 echo "Applying rootfs overlay..."
 

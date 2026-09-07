@@ -1,0 +1,75 @@
+#!/bin/sh
+
+mask_to_prefix()
+{
+    old_ifs="$IFS"
+    IFS=.
+    set -- $1
+    IFS="$old_ifs"
+
+    [ "$#" -eq 4 ] || return 1
+
+    prefix=0
+    partial_seen=0
+
+    for octet in "$@"; do
+        case "$octet" in
+            255) bits=8 ;;
+            254) bits=7 ;;
+            252) bits=6 ;;
+            248) bits=5 ;;
+            240) bits=4 ;;
+            224) bits=3 ;;
+            192) bits=2 ;;
+            128) bits=1 ;;
+            0)   bits=0 ;;
+            *) return 1 ;;
+        esac
+
+        # A valid netmask cannot return to 1-bits after
+        # we've already encountered a partial/zero octet.
+        if [ "$partial_seen" -eq 1 ] && [ "$bits" -ne 0 ]; then
+            return 1
+        fi
+
+        if [ "$bits" -lt 8 ]; then
+            partial_seen=1
+        fi
+
+        prefix=$((prefix + bits))
+    done
+
+    echo "$prefix"
+}
+
+case "$1" in
+    deconfig)
+        ip -4 addr flush dev "$interface"
+        ;;
+
+    bound|renew)
+        prefix="$(mask_to_prefix "$subnet")" || {
+            echo "udhcpc: invalid subnet mask: $subnet" >&2
+            exit 1
+        }
+
+        ip link set "$interface" up
+
+        ip -4 addr flush dev "$interface"
+        ip addr add "$ip/$prefix" dev "$interface"
+
+        ip route del default 2>/dev/null || true
+
+        if [ -n "${router:-}" ]; then
+            set -- $router
+            ip route add default via "$1" dev "$interface"
+        fi
+
+        : > /etc/resolv.conf
+        for server in ${dns:-}; do
+            echo "nameserver $server" >> /etc/resolv.conf
+        done
+        ;;
+esac
+
+exit 0
