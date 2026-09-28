@@ -1,9 +1,10 @@
-Olive Tree Linux: Sapling v0.1.2
+Olive Tree Linux: v0.2.0
 
 Minimalist Linux distro with Rust init.
 
 Version history:
 
+- v0.2.0  Persistant storage and partition
 - v0.1.2  Internal UFS storage support: Added Intel UFS host controller support
 - v0.1.1  Wi-Fi networking: Added RTL8851BE/rtw89 Wi-Fi support, Added static iw, Added static wpa_supplicant
 - v0.1.0  “Sapling”  First successful physical boot of Olive Tree Linux on x86-64 hardware, from UEFI USB to an interactive graphical console and shell.

@@ -117,6 +117,14 @@ fn shutdown(shell_pid: libc::pid_t) -> ! {
         libc::sync();
     }
 
+    unmount_persist();
+    
+    println!("Olive init: final filesystem sync");
+
+    unsafe {
+        libc::sync();
+    }
+
     println!("Olive init: powering off");
 
     unsafe {
@@ -129,10 +137,73 @@ fn shutdown(shell_pid: libc::pid_t) -> ! {
     );
 }
 
+fn mount_persist() {
+    const PERSIST_DIR: &str = "/persist";
+    const PERSIST_DEVICE: &str = "/dev/sda1";
+
+    println!("[olive-init] mounting persistance");
+
+    if let Err(error) = std::fs::create_dir_all(PERSIST_DIR) {
+       eprintln!(
+           "[olive-init] warning: could not create {PERSIST_DIR}: {error}"
+       );
+       return;
+    }
+
+    let source = std::ffi::CString::new(PERSIST_DEVICE).unwrap();
+    let target = std::ffi::CString::new(PERSIST_DIR).unwrap();
+    let filesystem = std::ffi::CString::new("ext2").unwrap();
+
+    let result = unsafe {
+        libc::mount(
+            source.as_ptr(),
+            target.as_ptr(),
+            filesystem.as_ptr(),
+            0,
+            std::ptr::null(),
+         )
+    };
+
+    if result == 0 {
+        println!("[olive-init] persistance mounted at {PERSIST_DIR}");
+    } else {
+        eprintln!(
+            "[olive-init] warning: failed to mount persistance: {}",
+            std::io::Error::last_os_error()
+        )
+    }
+}
+
+fn unmount_persist() {
+    let target = CString::new("/persist").unwrap();
+
+    println!("[olive-init] unmounting persistance");
+
+    let result = unsafe { 
+        libc::umount(target.as_ptr())
+    };
+
+    if result == 0 {
+        println!("[olive-init] persistance unmounted cleanly");
+        return;
+    }
+
+    let error = std::io::Error::last_os_error();
+
+    if error.raw_os_error() == Some(libc::EINVAL) {
+        println!("[olive-init] persistance was not mounted");
+        return;
+    }
+
+    eprintln!(
+        "[olive-init] failed to mount persistance: {}",
+        error
+    );
+}
 fn main() {
     println!("================================");
     println!("      Olive Tree Linux");
-    println!("           0.1.2");
+    println!("           0.2.0");
     println!("================================");
 
     unsafe {
@@ -169,6 +240,7 @@ fn main() {
     mount_fs("proc", "/proc", "proc");
     mount_fs("sysfs", "/sys", "sysfs");
     mount_fs("devtmpfs", "/dev", "devtmpfs");
+    mount_persist();
 
     println!("Olive init: creating child process");
 

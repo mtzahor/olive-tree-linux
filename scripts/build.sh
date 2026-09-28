@@ -11,6 +11,7 @@ echo "================================"
 "$ROOT/scripts/build-kernel.sh"
 "$ROOT/scripts/build-busybox.sh"
 "$ROOT/scripts/build-init.sh"
+"$ROOT/scripts/build-cgpt.sh"
 "$ROOT/scripts/build-initramfs.sh"
 "$ROOT/scripts/build-uefi.sh"
 

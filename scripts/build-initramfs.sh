@@ -50,6 +50,11 @@ if [ ! -x "$OLIVE_INIT" ]; then
     exit 1
 fi
 
+echo "Installing cgpt..."
+
+cp "$ROOT/build/cgpt" "$ROOTFS/bin/cgpt"
+chmod 755 "$ROOTFS/bin/cgpt"
+
 echo "Installing olive-init..."
 
 cp "$OLIVE_INIT" "$ROOTFS/init"
