@@ -203,7 +203,7 @@ fn unmount_persist() {
 fn main() {
     println!("================================");
     println!("      Olive Tree Linux");
-    println!("           0.2.0");
+    println!("           0.2.1");
     println!("================================");
 
     unsafe {

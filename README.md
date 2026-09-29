@@ -1,9 +1,10 @@
-Olive Tree Linux: v0.2.0
+Olive Tree Linux: v0.2.1
 
 Minimalist Linux distro with Rust init.
 
 Version history:
 
+- v0.2.1  Upgraded to Linux kernel 7.2.8
 - v0.2.0  Persistant storage and partition
 - v0.1.2  Internal UFS storage support: Added Intel UFS host controller support
 - v0.1.1  Wi-Fi networking: Added RTL8851BE/rtw89 Wi-Fi support, Added static iw, Added static wpa_supplicant
