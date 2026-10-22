@@ -1,9 +1,10 @@
-Olive Tree Linux: v0.2.1
+Olive Tree Linux: v0.2.2
 
 Minimalist Linux distro with Rust init.
 
 Version history:
 
+- v0.2.2  Upgraded to Linux kernel 7.3 and cleaned up init logs
 - v0.2.1  Upgraded to Linux kernel 7.2.8
 - v0.2.0  Persistant storage and partition
 - v0.1.2  Internal UFS storage support: Added Intel UFS host controller support
