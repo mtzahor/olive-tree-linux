@@ -54,8 +54,8 @@ extern "C" fn handle_sigterm(_signal: libc::c_int) {
 }
 
 fn shutdown(shell_pid: libc::pid_t) -> ! {
-    println!("Olive init: shutdown requested");
-    println!("Olive init: stopping shell");
+    println!("[olive-init] shutdown requested");
+    println!("[olive-init] stopping shell");
 
     let kill_result = unsafe {
         libc::kill(shell_pid, libc::SIGKILL)
@@ -65,11 +65,11 @@ fn shutdown(shell_pid: libc::pid_t) -> ! {
         let error = std::io::Error::last_os_error();
 
         if error.raw_os_error() != Some(libc::ESRCH) {
-            eprintln!("Olive init: failed to terminate shell: {}", error);
+            eprintln!("[olive-init] failed to terminate shell: {}", error);
         }
     }
 
-       println!("Olive init: waiting for remaining processes");
+       println!("[olive-init] waiting for remaining processes");
 
     loop {
         let mut status: libc::c_int = 0;
@@ -81,13 +81,13 @@ fn shutdown(shell_pid: libc::pid_t) -> ! {
         if waited_pid > 0 {
             if libc::WIFEXITED(status) {
                 println!(
-                    "Olive init: process {} exited with code {}",
+                    "[olive-init] process {} exited with code {}",
                     waited_pid,
                     libc::WEXITSTATUS(status)
                 );
             } else if libc::WIFSIGNALED(status) {
                 println!(
-                    "Olive init: process {} terminated by signal {}",
+                    "[olive-init] process {} terminated by signal {}",
                     waited_pid,
                     libc::WTERMSIG(status)
                 );
@@ -106,12 +106,12 @@ fn shutdown(shell_pid: libc::pid_t) -> ! {
             continue;
         }
 
-        eprintln!("Olive init: waitpid during shutdown failed: {}", error);
+        eprintln!("[olive-init] waitpid during shutdown failed: {}", error);
         break;
     }
 
-    println!("Olive init: all userspace processes stopped");
-    println!("Olive init: syncing filesystems");
+    println!("[olive-init] all userspace processes stopped");
+    println!("[olive-init] syncing filesystems");
 
     unsafe {
         libc::sync();
@@ -119,20 +119,20 @@ fn shutdown(shell_pid: libc::pid_t) -> ! {
 
     unmount_persist();
     
-    println!("Olive init: final filesystem sync");
+    println!("[olive-init] final filesystem sync");
 
     unsafe {
         libc::sync();
     }
 
-    println!("Olive init: powering off");
+    println!("[olive-init] powering off");
 
     unsafe {
         libc::reboot(libc::RB_POWER_OFF);
     }
 
     panic!(
-        "Olive init: power off failed: {}",
+        "[olive-init] power off failed: {}",
         std::io::Error::last_os_error()
     );
 }
@@ -203,7 +203,7 @@ fn unmount_persist() {
 fn main() {
     println!("================================");
     println!("      Olive Tree Linux");
-    println!("           0.2.1");
+    println!("           0.2.2");
     println!("================================");
 
     unsafe {
@@ -242,7 +242,7 @@ fn main() {
     mount_fs("devtmpfs", "/dev", "devtmpfs");
     mount_persist();
 
-    println!("Olive init: creating child process");
+    println!("[olive-init] creating child process");
 
     let pid = create_child();
     
@@ -330,7 +330,7 @@ fn main() {
         }
 
         panic!(
-            "execv /bin/sh failed: {}",
+            "[olive-init] execv /bin/sh failed: {}",
             std::io::Error::last_os_error()
         );
     } else {
@@ -351,14 +351,14 @@ fn main() {
                 let exit_code = libc::WEXITSTATUS(status);
              
                 println!(
-                    "Olive init: process {} exited with code {}",
+                    "[olive-init] process {} exited with code {}",
                     waited_pid,
                     exit_code
                 );
             } else if libc::WIFSIGNALED(status) {
                let signal = libc::WTERMSIG(status);
                 println!(
-                    "Olive init: process {} terminated by signal {}",
+                    "[olive-init] process {} terminated by signal {}",
                     waited_pid,
                     signal
                 );
@@ -367,13 +367,13 @@ fn main() {
             let error = std::io::Error::last_os_error();
 
             if error.raw_os_error() == Some(libc::ECHILD) {
-                println!("Olive init: no child processes remaining");
+                println!("[olive-init] no child processes remaining");
                 break;
             }
 
             if error.raw_os_error() == Some(libc::EINTR) {
                 if SIGTERM_RECEIVED.swap(false, Ordering::SeqCst) {
-                    println!("Olive init: received SIGTERM");
+                    println!("[olive-init] received SIGTERM");
                     shutdown(pid);
                 }
                 
@@ -385,6 +385,6 @@ fn main() {
         }
     }
 
-    println!("Olive init: shell exited");
+    println!("[olive-init] shell exited");
     shutdown(pid);
 }
