@@ -1,2 +1,5 @@
 /init/target/
 /build/
+*.swp
+*.swo
+*.save
