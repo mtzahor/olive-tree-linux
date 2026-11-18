@@ -1,7 +1,13 @@
 use std::ffi::CString;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicI32, Ordering};
 
-static SIGTERM_RECEIVED: AtomicBool = AtomicBool::new(false);
+static SIG_RECEIVED: AtomicI32 = AtomicI32::new(0);
+
+enum ShutdownAction {
+    Halt,
+    PowerOff,
+    Reboot,
+}
 
 fn mount_fs(source: &str, target: &str, filesystem: &str) {
     let source = CString::new(source).unwrap();
@@ -49,11 +55,11 @@ fn create_child() -> libc::pid_t {
     pid
 }
 
-extern "C" fn handle_sigterm(_signal: libc::c_int) {
-    SIGTERM_RECEIVED.store(true, Ordering::SeqCst);
+extern "C" fn handle_sigreceived(signal: libc::c_int) {
+    SIG_RECEIVED.store(signal, Ordering::SeqCst)
 }
 
-fn shutdown(shell_pid: libc::pid_t) -> ! {
+fn shutdown(shell_pid: libc::pid_t, action: ShutdownAction) -> ! {
     println!("[olive-init] shutdown requested");
     println!("[olive-init] stopping shell");
 
@@ -125,14 +131,28 @@ fn shutdown(shell_pid: libc::pid_t) -> ! {
         libc::sync();
     }
 
-    println!("[olive-init] powering off");
+
+    let reboot_cmd = match action {
+	ShutdownAction::Halt => {
+	    println!("[olive-init] halting system");
+	    libc::RB_HALT_SYSTEM
+	}
+	ShutdownAction::PowerOff => {
+	    println!("[olive-init] powering off system");
+	    libc::RB_POWER_OFF
+	}
+	ShutdownAction::Reboot => {
+	    println!("[olive-init] rebooting system");
+	    libc::RB_AUTOBOOT
+	}
+    };    
 
     unsafe {
-        libc::reboot(libc::RB_POWER_OFF);
+        libc::reboot(reboot_cmd);
     }
 
     panic!(
-        "[olive-init] power off failed: {}",
+        "[olive-init] shutdown failed: {}",
         std::io::Error::last_os_error()
     );
 }
@@ -203,26 +223,28 @@ fn unmount_persist() {
 fn main() {
     println!("================================");
     println!("      Olive Tree Linux");
-    println!("           0.2.2");
+    println!("           0.2.3");
     println!("================================");
 
     unsafe {
-        let mut action: libc::sigaction = std::mem::zeroed();
+        let mut handler_config: libc::sigaction = std::mem::zeroed();
         
-        action.sa_sigaction =
-            handle_sigterm as *const () as libc::sighandler_t;
+        handler_config.sa_sigaction =
+            handle_sigreceived as *const () as libc::sighandler_t;
 
-        libc::sigemptyset(&mut action.sa_mask);
+        libc::sigemptyset(&mut handler_config.sa_mask);
 
-        if libc::sigaction(
-            libc::SIGTERM,
-            &action,
-            std::ptr::null_mut(),
-        ) < 0 {
-            panic!(
-             "sigaction failed: {}",
-             std::io::Error::last_os_error()
-        );
+        for sig in [libc::SIGUSR1, libc::SIGUSR2, libc::SIGTERM] {
+            if libc::sigaction(
+                sig,
+                &handler_config,
+                std::ptr::null_mut(),
+            ) < 0 {
+                panic!(
+                 "sigaction for {sig} failed: {}",
+                 std::io::Error::last_os_error()
+            );
+            }
         }
     }
 
@@ -372,19 +394,23 @@ fn main() {
             }
 
             if error.raw_os_error() == Some(libc::EINTR) {
-                if SIGTERM_RECEIVED.swap(false, Ordering::SeqCst) {
-                    println!("[olive-init] received SIGTERM");
-                    shutdown(pid);
-                }
-                
-                continue;
-            }
+                let sig_rec = SIG_RECEIVED.swap(0, Ordering::SeqCst);
+		
+		let action = match sig_rec {
+			libc::SIGUSR1 => ShutdownAction::Halt,
+			libc::SIGUSR2 => ShutdownAction::PowerOff,
+			libc::SIGTERM => ShutdownAction::Reboot,
+			_ => continue,
+		};
 
-
+		shutdown(pid, action)
+	     }
+		
             panic!("waitpid failed: {}", error);
         }
     }
 
     println!("[olive-init] shell exited");
-    shutdown(pid);
+
+    shutdown(pid, ShutdownAction::PowerOff);
 }
