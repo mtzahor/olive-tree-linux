@@ -41,15 +41,10 @@ fn mount_fs(source: &str, target: &str, filesystem: &str) {
 }
 
 fn create_child() -> libc::pid_t {
-    let pid = unsafe {
-        libc::fork()
-    };
+    let pid = unsafe { libc::fork() };
 
     if pid < 0 {
-        panic!(
-            "fork failed: {}",
-            std::io::Error::last_os_error()
-        );
+        panic!("fork failed: {}", std::io::Error::last_os_error());
     }
 
     pid
@@ -63,9 +58,7 @@ fn shutdown(shell_pid: libc::pid_t, action: ShutdownAction) -> ! {
     println!("[olive-init] shutdown requested");
     println!("[olive-init] stopping shell");
 
-    let kill_result = unsafe {
-        libc::kill(shell_pid, libc::SIGKILL)
-    };
+    let kill_result = unsafe { libc::kill(shell_pid, libc::SIGKILL) };
 
     if kill_result < 0 {
         let error = std::io::Error::last_os_error();
@@ -75,14 +68,12 @@ fn shutdown(shell_pid: libc::pid_t, action: ShutdownAction) -> ! {
         }
     }
 
-       println!("[olive-init] waiting for remaining processes");
+    println!("[olive-init] waiting for remaining processes");
 
     loop {
         let mut status: libc::c_int = 0;
 
-        let waited_pid = unsafe {
-            libc::waitpid(-1, &mut status, 0)
-        };
+        let waited_pid = unsafe { libc::waitpid(-1, &mut status, 0) };
 
         if waited_pid > 0 {
             if libc::WIFEXITED(status) {
@@ -124,28 +115,27 @@ fn shutdown(shell_pid: libc::pid_t, action: ShutdownAction) -> ! {
     }
 
     unmount_persist();
-    
+
     println!("[olive-init] final filesystem sync");
 
     unsafe {
         libc::sync();
     }
 
-
     let reboot_cmd = match action {
-	ShutdownAction::Halt => {
-	    println!("[olive-init] halting system");
-	    libc::RB_HALT_SYSTEM
-	}
-	ShutdownAction::PowerOff => {
-	    println!("[olive-init] powering off system");
-	    libc::RB_POWER_OFF
-	}
-	ShutdownAction::Reboot => {
-	    println!("[olive-init] rebooting system");
-	    libc::RB_AUTOBOOT
-	}
-    };    
+        ShutdownAction::Halt => {
+            println!("[olive-init] halting system");
+            libc::RB_HALT_SYSTEM
+        }
+        ShutdownAction::PowerOff => {
+            println!("[olive-init] powering off system");
+            libc::RB_POWER_OFF
+        }
+        ShutdownAction::Reboot => {
+            println!("[olive-init] rebooting system");
+            libc::RB_AUTOBOOT
+        }
+    };
 
     unsafe {
         libc::reboot(reboot_cmd);
@@ -164,10 +154,8 @@ fn mount_persist() {
     println!("[olive-init] mounting persistance");
 
     if let Err(error) = std::fs::create_dir_all(PERSIST_DIR) {
-       eprintln!(
-           "[olive-init] warning: could not create {PERSIST_DIR}: {error}"
-       );
-       return;
+        eprintln!("[olive-init] warning: could not create {PERSIST_DIR}: {error}");
+        return;
     }
 
     let source = std::ffi::CString::new(PERSIST_DEVICE).unwrap();
@@ -181,7 +169,7 @@ fn mount_persist() {
             filesystem.as_ptr(),
             0,
             std::ptr::null(),
-         )
+        )
     };
 
     if result == 0 {
@@ -199,9 +187,7 @@ fn unmount_persist() {
 
     println!("[olive-init] unmounting persistance");
 
-    let result = unsafe { 
-        libc::umount(target.as_ptr())
-    };
+    let result = unsafe { libc::umount(target.as_ptr()) };
 
     if result == 0 {
         println!("[olive-init] persistance unmounted cleanly");
@@ -215,35 +201,27 @@ fn unmount_persist() {
         return;
     }
 
-    eprintln!(
-        "[olive-init] failed to mount persistance: {}",
-        error
-    );
+    eprintln!("[olive-init] failed to mount persistance: {}", error);
 }
 fn main() {
     println!("================================");
     println!("      Olive Tree Linux");
-    println!("           0.2.3");
+    println!("           0.2.4");
     println!("================================");
 
     unsafe {
         let mut handler_config: libc::sigaction = std::mem::zeroed();
-        
-        handler_config.sa_sigaction =
-            handle_sigreceived as *const () as libc::sighandler_t;
+
+        handler_config.sa_sigaction = handle_sigreceived as *const () as libc::sighandler_t;
 
         libc::sigemptyset(&mut handler_config.sa_mask);
 
         for sig in [libc::SIGUSR1, libc::SIGUSR2, libc::SIGTERM] {
-            if libc::sigaction(
-                sig,
-                &handler_config,
-                std::ptr::null_mut(),
-            ) < 0 {
+            if libc::sigaction(sig, &handler_config, std::ptr::null_mut()) < 0 {
                 panic!(
-                 "sigaction for {sig} failed: {}",
-                 std::io::Error::last_os_error()
-            );
+                    "sigaction for {sig} failed: {}",
+                    std::io::Error::last_os_error()
+                );
             }
         }
     }
@@ -252,10 +230,7 @@ fn main() {
     let hostname = b"olive-tree";
 
     unsafe {
-        libc::sethostname(
-            hostname.as_ptr() as *const libc::c_char,
-            hostname.len(),
-        );
+        libc::sethostname(hostname.as_ptr() as *const libc::c_char, hostname.len());
     }
 
     // Mount kernel virtual filesystems
@@ -267,27 +242,20 @@ fn main() {
     println!("[olive-init] creating child process");
 
     let pid = create_child();
-    
+
     if pid == 0 {
         println!("Hello from Olive Tree child!");
 
-        let session_id = unsafe {
-            libc::setsid()
-        };
+        let session_id = unsafe { libc::setsid() };
 
         if session_id < 0 {
-            panic!(
-                "setsid failed: {}",
-                std::io::Error::last_os_error()
-            );
+            panic!("setsid failed: {}", std::io::Error::last_os_error());
         }
 
         println!("Child became session leader SID {}", session_id);
         let console = CString::new("/dev/console").unwrap();
 
-        let console_fd = unsafe {
-            libc::open(console.as_ptr(), libc::O_RDWR)
-        };
+        let console_fd = unsafe { libc::open(console.as_ptr(), libc::O_RDWR) };
 
         if console_fd < 0 {
             panic!(
@@ -298,9 +266,7 @@ fn main() {
 
         println!("Opened /dev/console as file descriptor {}", console_fd);
 
-        let ioctl_result = unsafe {
-            libc::ioctl(console_fd, libc::TIOCSCTTY as _, 0)
-        };
+        let ioctl_result = unsafe { libc::ioctl(console_fd, libc::TIOCSCTTY as _, 0) };
 
         if ioctl_result < 0 {
             panic!(
@@ -312,24 +278,15 @@ fn main() {
         println!("Acquired /dev/console as controlling terminal");
 
         if unsafe { libc::dup2(console_fd, 0) } < 0 {
-            panic!(
-                "dup2 stdin failed: {}",
-                std::io::Error::last_os_error()
-            );
+            panic!("dup2 stdin failed: {}", std::io::Error::last_os_error());
         }
 
         if unsafe { libc::dup2(console_fd, 1) } < 0 {
-            panic!(
-                "dup2 stdout failed: {}",
-                std::io::Error::last_os_error()
-            );
+            panic!("dup2 stdout failed: {}", std::io::Error::last_os_error());
         }
 
         if unsafe { libc::dup2(console_fd, 2) } < 0 {
-            panic!(
-                "dup2 stderr failed: {}",
-                std::io::Error::last_os_error()
-            );
+            panic!("dup2 stderr failed: {}", std::io::Error::last_os_error());
         }
 
         if console_fd > 2 {
@@ -342,10 +299,7 @@ fn main() {
 
         let shell = CString::new("/bin/sh").unwrap();
 
-        let argv = [
-            shell.as_ptr(),
-            std::ptr::null(),
-        ];
+        let argv = [shell.as_ptr(), std::ptr::null()];
 
         unsafe {
             libc::execv(shell.as_ptr(), argv.as_ptr());
@@ -364,25 +318,33 @@ fn main() {
     loop {
         let mut status: libc::c_int = 0;
 
-        let waited_pid = unsafe {
-            libc::waitpid(-1, &mut status, 0)
+        let sig_rec = SIG_RECEIVED.swap(0, Ordering::SeqCst);
+        let action = match sig_rec {
+            libc::SIGUSR1 => Some(ShutdownAction::Halt),
+            libc::SIGUSR2 => Some(ShutdownAction::PowerOff),
+            libc::SIGTERM => Some(ShutdownAction::Reboot),
+            _ => None,
         };
+
+        if let Some(action) = action {
+            shutdown(pid, action);
+        }
+
+        let waited_pid = unsafe { libc::waitpid(-1, &mut status, 0) };
 
         if waited_pid > 0 {
             if libc::WIFEXITED(status) {
                 let exit_code = libc::WEXITSTATUS(status);
-             
+
                 println!(
                     "[olive-init] process {} exited with code {}",
-                    waited_pid,
-                    exit_code
+                    waited_pid, exit_code
                 );
             } else if libc::WIFSIGNALED(status) {
-               let signal = libc::WTERMSIG(status);
+                let signal = libc::WTERMSIG(status);
                 println!(
                     "[olive-init] process {} terminated by signal {}",
-                    waited_pid,
-                    signal
+                    waited_pid, signal
                 );
             }
         } else {
@@ -394,18 +356,9 @@ fn main() {
             }
 
             if error.raw_os_error() == Some(libc::EINTR) {
-                let sig_rec = SIG_RECEIVED.swap(0, Ordering::SeqCst);
-		
-		let action = match sig_rec {
-			libc::SIGUSR1 => ShutdownAction::Halt,
-			libc::SIGUSR2 => ShutdownAction::PowerOff,
-			libc::SIGTERM => ShutdownAction::Reboot,
-			_ => continue,
-		};
+                continue;
+            }
 
-		shutdown(pid, action)
-	     }
-		
             panic!("waitpid failed: {}", error);
         }
     }

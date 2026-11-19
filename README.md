@@ -1,9 +1,10 @@
-Olive Tree Linux: v0.2.2
+Olive Tree Linux: v0.2.4
 
 Minimalist Linux distro with Rust init.
 
 Version history:
 
+- v0.2.4  Fixed waitpid behavior
 - v0.2.3  Fixed poweroff, halt and reboot behavior. Upgraded to Linux kernel 7.3.5
 - v0.2.2  Upgraded to Linux kernel 7.3 and cleaned up init logs
 - v0.2.1  Upgraded to Linux kernel 7.2.8
